@@ -1,4 +1,4 @@
-import { game } from '../core/gameState.js';
+import { game, loadingTips } from '../core/gameState.js';
 import { initializeGame } from '../game/gameManager.js';
 
 // Character Creation

@@ -82,3 +82,5 @@ export const loadingTips = [
     "Level up by gaining experience from enemies!",
     "Complete quests for great rewards!"
 ];
+
+export { loadingTips } from './gameState.js';
