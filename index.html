@@ -760,21 +760,17 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script type="module">
-        import { game, initializeGame } from './game.js';
-        import { startGame, toggleInventory, toggleSettings, logout } from './ui.js';
-        import { initializeCharacterCreation } from './characterCreation.js';
+    <script>
+        // Initialize character creation when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCharacterCreation();
+        });
 
         // Make functions globally accessible
         window.startGame = startGame;
         window.toggleInventory = toggleInventory;
         window.toggleSettings = toggleSettings;
         window.logout = logout;
-
-        // Initialize character creation when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeCharacterCreation();
-        });
     </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
