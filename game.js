@@ -307,8 +307,10 @@ function startGameLoop() {
         updatePlayer();
         updateEnemies();
         updateParticles();
+        updateAIPlayers();
         updateCamera();
         updateUI();
+        checkLootPickup();
 
         // Render
         game.renderer.render(game.scene, game.camera);
@@ -318,6 +320,30 @@ function startGameLoop() {
     }
 
     requestAnimationFrame(gameLoop);
+}
+
+function updateAIPlayers() {
+    // Import and call the function from world.js
+    if (typeof window.updateAIPlayers === 'function') {
+        window.updateAIPlayers();
+    }
+}
+
+function checkLootPickup() {
+    game.world.objects.forEach((obj, index) => {
+        if (obj.userData.type === 'loot') {
+            const distance = game.player.position.distanceTo(obj.position);
+            if (distance <= 2) {
+                // Pick up item
+                const success = addItemToInventory(obj.userData.item);
+                if (success) {
+                    addChatMessage('System', `Picked up ${obj.userData.item.name}`, '#00ff00');
+                    game.scene.remove(obj);
+                    game.world.objects.splice(index, 1);
+                }
+            }
+        }
+    });
 }
 
 // Initialize character creation when page loads

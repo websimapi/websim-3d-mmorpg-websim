@@ -266,7 +266,158 @@ function onMouseClick(event) {
             const enemy = intersects[0].object.parent;
             if (enemy.userData.type === 'enemy') {
                 attackEnemy(enemy);
+                game.ui.selectedTarget = enemy;
             }
         }
     }
+}
+
+export function attackEnemy(enemy) {
+    const currentTime = Date.now();
+    
+    // Check attack cooldown
+    if (currentTime - (game.playerData.lastAttack || 0) < 1500) {
+        return;
+    }
+
+    game.playerData.lastAttack = currentTime;
+
+    // Calculate damage
+    const baseDamage = game.playerData.stats.strength * 2;
+    const variance = Math.random() * 0.2 - 0.1; // ±10%
+    const isCritical = Math.random() < 0.1; // 10% crit chance
+    
+    let damage = Math.floor(baseDamage * (1 + variance));
+    if (isCritical) damage *= 2;
+
+    // Apply defense
+    damage = Math.max(1, damage - enemy.userData.damage * 0.1);
+
+    // Deal damage
+    enemy.userData.health -= damage;
+
+    // Show damage number
+    const color = isCritical ? '#ff8800' : '#ff4444';
+    showFloatingText(enemy.position, `-${damage}`, color);
+
+    // Update quest progress
+    updateQuestProgress('attack');
+
+    addChatMessage('System', `You attack ${enemy.userData.enemyType} for ${damage} damage!`, '#ffaa00');
+
+    // Check if enemy died
+    if (enemy.userData.health <= 0) {
+        enemyDied(enemy);
+    }
+}
+
+function enemyDied(enemy) {
+    // Give XP
+    game.playerData.stats.xp += enemy.userData.xpReward;
+    
+    // Update quest progress
+    updateQuestProgress('kill', enemy.userData.enemyType);
+    
+    // Drop loot
+    dropLoot(enemy.position);
+    
+    // Death animation
+    const startScale = enemy.scale.x;
+    const startTime = Date.now();
+    
+    const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = elapsed / 500; // 0.5 second animation
+        
+        if (progress >= 1) {
+            // Remove enemy
+            game.scene.remove(enemy);
+            const index = game.world.enemies.indexOf(enemy);
+            if (index > -1) {
+                game.world.enemies.splice(index, 1);
+            }
+            return;
+        }
+        
+        const scale = startScale * (1 - progress);
+        enemy.scale.setScalar(scale);
+        
+        requestAnimationFrame(animate);
+    };
+    
+    animate();
+    
+    addChatMessage('System', `${enemy.userData.enemyType} defeated! Gained ${enemy.userData.xpReward} XP!`, '#00ff00');
+    checkLevelUp();
+}
+
+function dropLoot(position) {
+    const dropChance = Math.random();
+    
+    if (dropChance < 0.3) { // 30% chance for health potion
+        createLootDrop(position, {
+            type: 'potion',
+            name: 'Health Potion',
+            effect: 'heal',
+            value: 50,
+            icon: '🧪',
+            rarity: 'common'
+        });
+    } else if (dropChance < 0.5) { // 20% chance for mana potion
+        createLootDrop(position, {
+            type: 'potion',
+            name: 'Mana Potion',
+            effect: 'mana',
+            value: 30,
+            icon: '🔮',
+            rarity: 'common'
+        });
+    } else if (dropChance < 0.6) { // 10% chance for equipment
+        const equipment = generateRandomEquipment();
+        createLootDrop(position, equipment);
+    }
+    
+    // Always drop some gold
+    const goldAmount = Math.floor(Math.random() * 20) + 5;
+    game.playerData.stats.gold += goldAmount;
+    showFloatingText(position, `+${goldAmount} gold`, '#ffd700');
+}
+
+function createLootDrop(position, item) {
+    const lootGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const lootMaterial = new THREE.MeshLambertMaterial({ color: 0xffd700 });
+    const loot = new THREE.Mesh(lootGeometry, lootMaterial);
+    
+    loot.position.copy(position);
+    loot.position.y = getTerrainHeight(position.x, position.z) + 0.5;
+    
+    loot.userData = {
+        type: 'loot',
+        item: item,
+        createdAt: Date.now()
+    };
+    
+    game.scene.add(loot);
+    game.world.objects.push(loot);
+    
+    // Auto-pickup after 10 seconds
+    setTimeout(() => {
+        game.scene.remove(loot);
+        const index = game.world.objects.indexOf(loot);
+        if (index > -1) {
+            game.world.objects.splice(index, 1);
+        }
+    }, 10000);
+}
+
+function generateRandomEquipment() {
+    const equipmentTypes = [
+        { type: 'weapon', name: 'Rusty Sword', damage: 8, icon: '⚔️' },
+        { type: 'weapon', name: 'Sharp Dagger', damage: 6, icon: '🗡️' },
+        { type: 'armor', name: 'Leather Vest', defense: 5, icon: '🛡️' },
+        { type: 'armor', name: 'Chain Mail', defense: 8, icon: '⚙️' }
+    ];
+    
+    const baseItem = equipmentTypes[Math.floor(Math.random() * equipmentTypes.length)];
+    return { ...baseItem, rarity: 'common' };
 }

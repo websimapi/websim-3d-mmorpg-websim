@@ -162,6 +162,143 @@ export function logout() {
     location.reload();
 }
 
+export function updateQuestProgress(type, target = null, amount = 1) {
+    game.playerData.activeQuests.forEach(quest => {
+        quest.objectives.forEach(objective => {
+            if (objective.type === type && objective.current < objective.required) {
+                if (!target || objective.target === target) {
+                    objective.current += amount;
+                    if (objective.current >= objective.required) {
+                        addChatMessage('System', `Quest objective completed: ${objective.description}`, '#00ff00');
+                    }
+                }
+            }
+        });
+
+        // Check if quest is complete
+        const allComplete = quest.objectives.every(obj => obj.current >= obj.required);
+        if (allComplete && quest.status === 'active') {
+            completeQuest(quest);
+        }
+    });
+
+    updateQuestDisplay();
+}
+
+export function checkLevelUp() {
+    while (game.playerData.stats.xp >= game.playerData.stats.xpRequired) {
+        game.playerData.stats.xp -= game.playerData.stats.xpRequired;
+        game.playerData.stats.level++;
+        game.playerData.stats.xpRequired = Math.floor(game.playerData.stats.xpRequired * 1.5);
+
+        // Increase stats
+        game.playerData.stats.maxHealth += 10;
+        game.playerData.stats.maxMana += 5;
+        game.playerData.stats.maxStamina += 5;
+        game.playerData.stats.strength += 2;
+        game.playerData.stats.agility += 2;
+        game.playerData.stats.intelligence += 2;
+        game.playerData.stats.defense += 1;
+
+        // Restore stats
+        game.playerData.stats.health = game.playerData.stats.maxHealth;
+        game.playerData.stats.mana = game.playerData.stats.maxMana;
+        game.playerData.stats.stamina = game.playerData.stats.maxStamina;
+
+        // Level up effect
+        createLevelUpEffect();
+        addChatMessage('System', `Level up! You are now level ${game.playerData.stats.level}!`, '#ffd700');
+    }
+}
+
+function createLevelUpEffect() {
+    const particles = [];
+    for (let i = 0; i < 50; i++) {
+        const particle = {
+            position: {
+                x: game.player.position.x + (Math.random() - 0.5) * 4,
+                y: game.player.position.y + Math.random() * 5,
+                z: game.player.position.z + (Math.random() - 0.5) * 4
+            },
+            velocity: {
+                x: (Math.random() - 0.5) * 0.3,
+                y: Math.random() * 0.5,
+                z: (Math.random() - 0.5) * 0.3
+            },
+            life: 2.0,
+            maxLife: 2.0,
+            color: '#ffd700'
+        };
+        particles.push(particle);
+    }
+    game.world.particles.push(...particles);
+}
+
+function completeQuest(quest) {
+    quest.status = 'completed';
+    
+    // Give rewards
+    game.playerData.stats.xp += quest.rewards.xp || 0;
+    game.playerData.stats.gold += quest.rewards.gold || 0;
+    
+    if (quest.rewards.items) {
+        quest.rewards.items.forEach(item => {
+            addItemToInventory(item);
+        });
+    }
+
+    addChatMessage('System', `Quest completed: ${quest.title}! Gained ${quest.rewards.xp} XP and ${quest.rewards.gold} gold!`, '#ffd700');
+    checkLevelUp();
+}
+
+function updateQuestDisplay() {
+    const questList = document.getElementById('questList');
+    questList.innerHTML = '';
+
+    game.playerData.activeQuests.filter(q => q.status === 'active').forEach(quest => {
+        const questDiv = document.createElement('div');
+        questDiv.className = 'quest-item';
+        
+        questDiv.innerHTML = `
+            <div class="quest-title">${quest.title}</div>
+            ${quest.objectives.map(obj => `
+                <div class="quest-objective">${obj.description} (${obj.current}/${obj.required})</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${(obj.current / obj.required) * 100}%"></div>
+                </div>
+            `).join('')}
+        `;
+        
+        questList.appendChild(questDiv);
+    });
+}
+
+export function interactWithNearby() {
+    // Check for nearby NPCs
+    game.world.npcs.forEach(npc => {
+        const distance = game.player.position.distanceTo(npc.position);
+        if (distance <= 3) {
+            showNPCDialogue(npc);
+        }
+    });
+}
+
+function showNPCDialogue(npc) {
+    // Simple dialogue system
+    const dialogue = npc.userData.dialogues[npc.userData.currentDialogue || 0];
+    addChatMessage(npc.userData.name, dialogue, '#ffff00');
+    
+    // Offer quest if available
+    if (npc.userData.quests && npc.userData.quests.length > 0) {
+        const availableQuest = npc.userData.quests.find(q => !game.playerData.activeQuests.find(aq => aq.id === q.id));
+        if (availableQuest) {
+            game.playerData.activeQuests.push({...availableQuest, status: 'active'});
+            addChatMessage('System', `New quest accepted: ${availableQuest.title}`, '#00ff00');
+            updateQuestDisplay();
+        }
+    }
+}
+
 // Make functions globally accessible
 window.toggleInventory = toggleInventory;
 window.toggleSettings = toggleSettings;
