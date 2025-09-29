@@ -827,7 +827,7 @@
                 frameCount: 0,
                 lastFpsUpdate: 0
             },
-            camera: {
+            cameraData: {
                 offset: { x: 0, y: 5, z: 10 },
                 shake: { x: 0, y: 0, intensity: 0, duration: 0 }
             }
@@ -2589,8 +2589,8 @@
             
             // Screen shake
             if (document.getElementById('cameraShake').checked) {
-                game.camera.shake.intensity = 0.5;
-                game.camera.shake.duration = 200;
+                game.cameraData.shake.intensity = 0.5;
+                game.cameraData.shake.duration = 200;
             }
             
             addChatMessage('System', `${enemy.userData.enemyType} attacks you for ${actualDamage} damage!`, '#ff4444');
@@ -2706,9 +2706,9 @@
             const targetPos = new THREE.Vector3()
                 .copy(game.player.position)
                 .add(new THREE.Vector3(
-                    game.camera.offset.x + game.camera.shake.x,
-                    game.camera.offset.y + game.camera.shake.y,
-                    game.camera.offset.z
+                    game.cameraData.offset.x + game.cameraData.shake.x,
+                    game.cameraData.offset.y + game.cameraData.shake.y,
+                    game.cameraData.offset.z
                 ));
             
             // Smooth camera following
@@ -2716,14 +2716,14 @@
             game.camera.lookAt(game.player.position);
             
             // Update camera shake
-            if (game.camera.shake.duration > 0) {
-                game.camera.shake.duration -= game.time.deltaTime * 1000;
-                game.camera.shake.x = (Math.random() - 0.5) * game.camera.shake.intensity;
-                game.camera.shake.y = (Math.random() - 0.5) * game.camera.shake.intensity;
+            if (game.cameraData.shake.duration > 0) {
+                game.cameraData.shake.duration -= game.time.deltaTime * 1000;
+                game.cameraData.shake.x = (Math.random() - 0.5) * game.cameraData.shake.intensity;
+                game.cameraData.shake.y = (Math.random() - 0.5) * game.cameraData.shake.intensity;
             } else {
-                game.camera.shake.x = 0;
-                game.camera.shake.y = 0;
-                game.camera.shake.intensity = 0;
+                game.cameraData.shake.x = 0;
+                game.cameraData.shake.y = 0;
+                game.cameraData.shake.intensity = 0;
             }
         }
 
