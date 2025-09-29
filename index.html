@@ -1196,7 +1196,7 @@
             const enemyGroup = new THREE.Group();
             
             // Body (different shape for different enemies)
-            const bodyGeometry = new THREE.CapsuleGeometry(0.5, 1.5, 4, 8);
+            const bodyGeometry = new THREE.CylinderGeometry(0.5, 0.6, 1.5, 8);
             const bodyMaterial = new THREE.MeshLambertMaterial({ color: type.color });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
             body.position.y = 1;
@@ -1293,7 +1293,7 @@
             const npcGroup = new THREE.Group();
             
             // Body
-            const bodyGeometry = new THREE.CapsuleGeometry(0.4, 1.4, 4, 8);
+            const bodyGeometry = new THREE.CylinderGeometry(0.4, 0.5, 1.4, 8);
             const bodyMaterial = new THREE.MeshLambertMaterial({ color: data.color });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
             body.position.y = 1;
